@@ -139,7 +139,7 @@ class MyFrame(wx.Frame):
                 ind += 1
             self.write_in_file(stw, i, j, length)   
             i += 1
-                  
+                    
     # Ecriture des données stw dans un fihcier EXCEL
     def write_in_file(self, stw, num_fic, nbr_pts, length):
          
@@ -404,12 +404,16 @@ class MyFrame(wx.Frame):
         
         # Ecriture des données dans un fichier Excel
         if check:
+             
+            # Découpage et écriture des données
             self.cut_sto (sto, length, nb_sig)          
-            
+                        
             # Ajouter un message pour spécifier le répertoire de travail actuel
             cwd = os.getcwd()        
             dlg = wx.MessageDialog(self, cwd, "Répertoire du fichier " + self.lstAction2.GetStringSelection() + ".xlsx", style=wx.OK , pos=wx.DefaultPosition)
             dlg.ShowModal()
+            
+            print('Happy End !')
             
             # Fermer la fenêtre principale
             self.Close()         
@@ -447,23 +451,7 @@ class MyFrame(wx.Frame):
             nbr_fic.append(str(i)) 
         
         return nbr_fic 
-      
-class MyGauge(wx.Frame):
-    
-   def __init__(self, parent, id, title):
-       Frame.__init__(self, parent, id, title)
-       self.timer = wx.Timer(self, 1)
-	   self.count = 0
-	   self.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
-	   panel = wx.Panel(self, -1)
-        # Toutes les 100ms, on incrémente la barre de progression qui possede 50 pas d'incrémentations.
-		self.gauge = wx.Gauge(panel, -1, 50, size=(250, 25))
-		self.timer.Start(100)
-        
-    def OnTimer(self, event):
-		self.count = self.count +1
-		self.gauge.SetValue(self.count)
-        
+                          
 class Interface(wx.App):   # Application et fenêtre
     
     def __init__(self):
@@ -475,10 +463,7 @@ class Interface(wx.App):   # Application et fenêtre
         self.frame.Show(True)        
         self.MainLoop()
 
-if __name__ == '__main__':
-    #app = wx.App()
-    #frame = MyFrame("Coordonnées des signaux d'électrocardiogramme")
-    #app.MainLoop()
+if __name__ == '__main__':   
     
     # Création d'une interface pour installer le gestionnaire et ouvrir la fenêtre principale
     app=Interface()
