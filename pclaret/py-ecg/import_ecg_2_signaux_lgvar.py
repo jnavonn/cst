@@ -80,7 +80,7 @@ class MyFrame(wx.Frame):
                 ind +=1
             
         except IndexError:   
-            dlg = wx.MessageDialog(self, "Le fichier de données ne peut pas être traités (plus de 2 signaux).", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
+            dlg = wx.MessageDialog(self, "Le fichier de données ne peut pas être traité (plus de 2 signaux).", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
             dlg.ShowModal() 
             
             check = False                
