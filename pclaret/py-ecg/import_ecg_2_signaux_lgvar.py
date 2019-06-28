@@ -53,71 +53,80 @@ class MyFrame(wx.Frame):
                
         # Ouverture du fichier de données .dat
         fich = open(nom_fic + ".dat", "rb")
-    
-        # Lecture du fichier de données au format .dat avec 2 signaux
-        byte = fich.read(1)     
-        ind = 0;
-        while byte: 
-            l = int.from_bytes(byte, 'big')         
+        check = True
         
-            byte = fich.read(1)                   
-            m = int.from_bytes(byte, 'big')      
-        
-            byte = fich.read(1)                    
-            r = int.from_bytes(byte, 'big')       
-        
-            # Ordonnées du premier signal
-            m0 = ( m & int('0x0f', 16) ) << 8    
-            sto[0, ind] = c12( l + m0 )          
-        
-            # Ordonnées du deuxième signal
-            m1 = ( m & int('0xf0', 16) ) << 4    
-            sto[1, ind] = c12 ( m1 + r )         
+        try:
+            # Lecture du fichier de données au format .dat avec 2 signaux
+            byte = fich.read(1)     
+            ind = 0;
+            while byte: 
+                l = int.from_bytes(byte, 'big')         
             
-            byte = fich.read(1)
-            ind +=1
+                byte = fich.read(1)                   
+                m = int.from_bytes(byte, 'big')      
+            
+                byte = fich.read(1)                    
+                r = int.from_bytes(byte, 'big')       
+            
+                # Ordonnées du premier signal
+                m0 = ( m & int('0x0f', 16) ) << 8    
+                sto[0, ind] = c12( l + m0 )          
+            
+                # Ordonnées du deuxième signal
+                m1 = ( m & int('0xf0', 16) ) << 4    
+                sto[1, ind] = c12 ( m1 + r )         
+                
+                byte = fich.read(1)
+                ind +=1
+            
+        except IndexError:   
+            dlg = wx.MessageDialog(self, "Le fichier de données ne peut pas être traités (plus de 2 signaux).", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
+            dlg.ShowModal() 
+            
+            check = False                
+            
         fich.close()  
     
         print("")           
         
-        check = True
+        if check:
         
-        # check first and checksum
-        if ( np.prod(sto[:, 0]==ckf) ):    
-            print('import initial ok')
-        else:
-            print('import initial ko') 
-            print('sto[:, 0] %s' %sto[:, 0])
-            print('ckf %s' %ckf)
-            dlg = wx.MessageDialog(self, "Les premières mesures ne sont pas correctes. Veuillez changer le fichier de données.", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
-            dlg.ShowModal() 
-            self.txtLabel1.SetLabel("Nombre total de points sur le signal : 0")
-            self.lstAction3.Clear()  
-            self.lstAction3.Enable(False)
-            self.lstAction4.Clear()  
-            self.lstAction4.Enable(False)
-            self.lstAction5.Clear()  
-            self.lstAction5.Enable(False)
-            self.btnEcrire.Enable(False) 
-            check = False
-          
-        if ( np.prod( np.int16( np.sum(sto, axis = 1) ) == cks ) ):    
-            print('checksum ok')              
-        else:
-            print('checksum ko')
-            print ('sto %s' %np.int16( np.sum(sto, axis = 1)))
-            print ('cks %s' %cks) 
-            dlg = wx.MessageDialog(self, "La somme des mesures n'est pas correcte. Veuillez changer le fichier de données.", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
-            dlg.ShowModal() 
-            self.txtLabel1.SetLabel("Nombre total de points sur le signal : 0")
-            self.lstAction3.Clear()  
-            self.lstAction3.Enable(False)
-            self.lstAction4.Clear()  
-            self.lstAction4.Enable(False)
-            self.lstAction5.Clear()  
-            self.lstAction5.Enable(False)
-            self.btnEcrire.Enable(False) 
-            check = False
+            # check first and checksum
+            if ( np.prod(sto[:, 0]==ckf) ):    
+                print('import initial ok')
+            else:
+                print('import initial ko') 
+                print('sto[:, 0] %s' %sto[:, 0])
+                print('ckf %s' %ckf)
+                dlg = wx.MessageDialog(self, "Les premières mesures ne sont pas correctes. Veuillez changer le fichier de données.", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
+                dlg.ShowModal() 
+                self.txtLabel1.SetLabel("Nombre total de points sur le signal : 0")
+                self.lstAction3.Clear()  
+                self.lstAction3.Enable(False)
+                self.lstAction4.Clear()  
+                self.lstAction4.Enable(False)
+                self.lstAction5.Clear()  
+                self.lstAction5.Enable(False)
+                self.btnEcrire.Enable(False) 
+                check = False
+              
+            if ( np.prod( np.int16( np.sum(sto, axis = 1) ) == cks ) ):    
+                print('checksum ok')              
+            else:
+                print('checksum ko')
+                print ('sto %s' %np.int16( np.sum(sto, axis = 1)))
+                print ('cks %s' %cks) 
+                dlg = wx.MessageDialog(self, "La somme des mesures n'est pas correcte. Veuillez changer le fichier de données.", "Contrôle de cohérence des données", style=wx.OK , pos=wx.DefaultPosition)
+                dlg.ShowModal() 
+                self.txtLabel1.SetLabel("Nombre total de points sur le signal : 0")
+                self.lstAction3.Clear()  
+                self.lstAction3.Enable(False)
+                self.lstAction4.Clear()  
+                self.lstAction4.Enable(False)
+                self.lstAction5.Clear()  
+                self.lstAction5.Enable(False)
+                self.btnEcrire.Enable(False) 
+                check = False
             
         return sto, length, nb_sig, check
     
@@ -399,6 +408,8 @@ class MyFrame(wx.Frame):
     # Ecriture dans le fichier EXCEL puis affichage d'un message de confirmation
     def onBoutonClick(self, event):
           
+        MsgTrt = MyMessageTraitement()
+                       
         # Récupération des données dans le fichier .dat
         sto, length, nb_sig, check = self.import_data()
         
@@ -407,7 +418,9 @@ class MyFrame(wx.Frame):
              
             # Découpage et écriture des données
             self.cut_sto (sto, length, nb_sig)          
-                        
+            
+            MsgTrt.Close()  
+            
             # Ajouter un message pour spécifier le répertoire de travail actuel
             cwd = os.getcwd()        
             dlg = wx.MessageDialog(self, cwd, "Répertoire du fichier " + self.lstAction2.GetStringSelection() + ".xlsx", style=wx.OK , pos=wx.DefaultPosition)
@@ -416,8 +429,12 @@ class MyFrame(wx.Frame):
             print('Happy End !')
             
             # Fermer la fenêtre principale
-            self.Close()         
-        
+            self.Close()  
+            
+        else:
+            
+            MsgTrt.Close() 
+                        
     # Récupération de tous les noms de fichiers présents dans la base de données 
     def search_lstAction2(self, nom_rep):
         
@@ -451,6 +468,29 @@ class MyFrame(wx.Frame):
             nbr_fic.append(str(i)) 
         
         return nbr_fic 
+
+class MyMessageTraitement(wx.Frame):
+     
+    def __init__(self):
+        wx.Frame.__init__(self, None, 1, title ="Compte rendu du traitement")
+                 
+        # creation d'un panel -conteneur-
+        panel = wx.Panel(self, 1)
+        box = wx.BoxSizer(wx.VERTICAL)
+
+        # Ajouter un texte dans le conteneur
+        message = wx.StaticText(panel, 1, label="Traitement en cours...")
+           
+        box.AddSpacer(20)
+        box.Add(message)             
+
+        panel.SetSizer(box)
+        panel.Fit()
+        
+        self.SetSize((400, 100))
+        self.Centre()
+        self.Show(True)
+        self.Update()
                           
 class Interface(wx.App):   # Application et fenêtre
     
