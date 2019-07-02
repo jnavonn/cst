@@ -5,6 +5,7 @@
 import wx
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 from openpyxl import Workbook
 from openpyxl.styles import colors
 from openpyxl.styles import Font, Color
@@ -24,6 +25,9 @@ class MyFrame(wx.Frame):
         # Charger les données d'un fichier texte (première ligne, colonne 1 à 3) et mettre dans un tableau
         hea0 = np.genfromtxt(nom_fic + '.hea', dtype = int, delimiter=' ', usecols=(1, 2, 3))[0] 
            
+        # Nom des signaux
+        nom_sig = hea1 = np.genfromtxt(nom_fic + '.hea', dtype = str, delimiter=' ', skip_header = 1, usecols=(8))
+            
         # Joindre le tableau avec un tableau de 3 zéros (concaténation)
         hea0 = np.hstack((hea0, np.zeros(3, dtype= int)))
      
@@ -128,7 +132,7 @@ class MyFrame(wx.Frame):
                 self.btnEcrire.Enable(False) 
                 check = False
             
-        return sto, length, nb_sig, check
+        return sto, length, nb_sig, nom_sig, check
     
     # Découpage des données sto en n fichiers de p points de mesure
     def cut_sto (self, sto, length, nb_sig):
@@ -305,7 +309,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.onBoutonClick, self.btnEcrire)
         self.Show(True)
 
-    # Remplissage des différentes listes déroulantse 
+    # Remplissage des différentes listes déroulantes 
     def onTextChanged(self, event):
                     
         # liste déroulante des fichiers présents dans la base de données
@@ -411,11 +415,30 @@ class MyFrame(wx.Frame):
         MsgTrt = MyMessageTraitement()
                        
         # Récupération des données dans le fichier .dat
-        sto, length, nb_sig, check = self.import_data()
+        sto, length, nb_sig, nom_sig, check = self.import_data()
         
         # Ecriture des données dans un fichier Excel
         if check:
              
+            # Tracage de la courbe pour chaque signal  
+            i = 0
+            while i <= nb_sig-1:
+                
+                # Tableau des abscisses et des ordonnées 
+                x,y = self.curve_data(nom_sig, sto, i)    
+            
+                # Limite des 2 axes  
+                x = np.arange(3000)
+                y = y[:3000]
+            
+                ## plot    
+                # Tracage de la courbe à partir du tableau x, y
+                plt.plot(x,y)
+                #plt.scatter(np.arange(t),sto[1, :t], marker='o', facecolors='none', edgecolors='r')
+                plt.show()
+            
+                i += 1         
+                
             # Découpage et écriture des données
             self.cut_sto (sto, length, nb_sig)          
             
@@ -430,11 +453,26 @@ class MyFrame(wx.Frame):
             
             # Fermer la fenêtre principale
             self.Close()  
-            
+                          
         else:
             
             MsgTrt.Close() 
-                        
+        
+    # Tracage d'une courbe pour un signal ECG                
+    def curve_data(self, nom_sig, sto, i):          
+       
+        print("")        
+        print("Signal : %s" %nom_sig[i])
+        
+        # Tableau des abscisses
+        # len(sto[0]) = 650000
+        x = np.arange(len(sto[i]))   # [     0      1      2 ... 649997 649998 649999]
+         
+        # Tableau des ordonnées
+        y = sto[i]                   # [995 995 995 ... 889 871 768]   
+                  
+        return x, y 
+
     # Récupération de tous les noms de fichiers présents dans la base de données 
     def search_lstAction2(self, nom_rep):
         
@@ -469,12 +507,12 @@ class MyFrame(wx.Frame):
         
         return nbr_fic 
 
-class MyMessageTraitement(wx.Frame):
+class MyMessageTraitement(wx.Frame):   # Message informatif du traitement en cours...
      
     def __init__(self):
         wx.Frame.__init__(self, None, 1, title ="Compte rendu du traitement")
                  
-        # creation d'un panel -conteneur-
+        # creation d'un panel conteneur
         panel = wx.Panel(self, 1)
         box = wx.BoxSizer(wx.VERTICAL)
 
